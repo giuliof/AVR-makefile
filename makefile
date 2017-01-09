@@ -11,7 +11,7 @@ PROJ_NAME  = TestSerial
 SRC_DIR       = ./src
 
 # The header files we use are located here
-INC_DIR  =  ./src
+INC_DIR  =  ./include
 INC_DIR  += .
 
 BUILD_DIR     = build
