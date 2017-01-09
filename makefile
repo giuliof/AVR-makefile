@@ -89,6 +89,23 @@ CXXFLAGS = $(CFLAGS)
 LFLAGS     = -mmcu=$(MCU)
 LFLAGS    += $(addprefix -I,$(INC_DIR))
 
+######################################################################
+#                      PROGRAMMING TOOLS                             #
+######################################################################
+# To match MCU with BOARD, see link
+# http://www.nongnu.org/avr-libc/user-manual/using_tools.html
+PROGRAMMER = usbasp
+BOARD      = t13
+# verbose
+PROGRAM_FLAGS =  -v
+# choose programmer
+PROGRAM_FLAGS += -c $(PROGRAMMER)
+# target board
+PROGRAM_FLAGS += -p $(BOARD)
+
+######################################################################
+#                             TARGETS                                #
+######################################################################
 .PHONY: clean
 
 all:     $(OUTPUT_DIR)/$(PROJ_NAME).hex
@@ -129,6 +146,9 @@ $(OUTPUT_DIR)/$(PROJ_NAME).hex: $(OUTPUT_DIR)/$(PROJ_NAME).elf
 size: $(OUTPUT_DIR)/$(PROJ_NAME).elf
 	$(SIZE) -C --mcu=$(MCU) $(OUTPUT_DIR)/$(PROJ_NAME).elf
 
+program:
+	avrdude $(PROGRAM_FLAGS) -U flash:w:$(OUTPUT_DIR)/$(PROJ_NAME).hex:i
+	
 clean:
 	@echo -e "\033[1;33m[Cleaning   ]\033[0m"
 	@rm -f $(BUILD_DIR)/*
