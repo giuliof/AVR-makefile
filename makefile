@@ -1,5 +1,5 @@
 # Name of the project
-PROJ_NAME  = TestSerial
+PROJ_NAME  = Foo
 
 ######################################################################
 #                             SOURCES                                #
@@ -19,23 +19,22 @@ OUTPUT_DIR    = output
 
 ## FILES ##
 # c files
-#~ SRCS       = main.c
-SRCS      = TestSerial.cpp
+SRCS      = main.cpp
 
 # asm files
 # S maiuscola! Invoca prima il compilatore gcc che interpreta macro e altro
-ASRC       = BasicSerial.S
+# ASRC       = main.S
 
 # header files
 # Specify here libraries! Makefile will check existance before launching
-DEPS       = BasicSerial.h
+# DEPS       = foo.h
 
 # Object files
 # Automatically declares object file names
 OBJS          = $(patsubst %.c,   $(BUILD_DIR)/%.o,   $(filter %.c,$(SRCS)) )
-OBJS         += $(patsubst %.cpp, $(BUILD_DIR)/%.o,   $(filter %.cpp,$(SRCS)) )
+OBJS         += $(patsubst %.cpp, $(BUILD_DIR)/%.cpp.o,   $(filter %.cpp,$(SRCS)) )
 OBJS         += $(patsubst %.s,   $(BUILD_DIR)/%.s.o, $(filter %.s,$(ASRC)) )
-OBJS         += $(patsubst %.S,   $(BUILD_DIR)/%.s.o, $(filter %.S,$(ASRC)) )
+OBJS         += $(patsubst %.S,   $(BUILD_DIR)/%.S.o, $(filter %.S,$(ASRC)) )
 
 # Virtual Paths
 # Tell make to look in that folder if it cannot find a source
@@ -57,10 +56,14 @@ OBJDUMP    = avr-objdump
 GDB        = avr-gdb
 AS         = avr-as
 SIZE       = avr-size
+AVRDUDE		 = avrdude
 
 # Microcontroller
-MCU        = attiny44
-F_CPU      = 8000000
+MCU        = atmega328p
+F_CPU      = 2000000
+# Fuses
+LFUSE			 = 0x62
+HFUSE			 = 0xd9
 
 ### GCC options ###
 
@@ -94,7 +97,7 @@ LFLAGS    += $(addprefix -I,$(INC_DIR))
 all:     $(OUTPUT_DIR)/$(PROJ_NAME).hex
 
 # invokes CC compiler before assemblying
-$(BUILD_DIR)/%.s.o : %.S $(DEPS)
+$(BUILD_DIR)/%.S.o : %.S $(DEPS)
 	@echo -e "\033[1;33m[Assembling  ]\033[0m $^"
 	@mkdir -p ${BUILD_DIR}
 	$(CC) $(CFLAGS) $< -o $@
@@ -106,7 +109,7 @@ $(BUILD_DIR)/%.s.o : %.s $(DEPS)
 	$(CC) $(CFLAGS) $< -o $@
 
 # .cxx files
-$(BUILD_DIR)/%.o:  %.cpp $(DEPS)
+$(BUILD_DIR)/%.cpp.o:  %.cpp $(DEPS)
 	@echo -e "\033[1;33m[Compiling   ]\033[0m $^"
 	@mkdir -p ${BUILD_DIR}
 	$(CXX) $(CXXFLAGS) $< -o $@
@@ -121,13 +124,24 @@ $(OUTPUT_DIR)/$(PROJ_NAME).elf: $(OBJS)
 	@echo -e "\033[1;33m[Linking     ]\033[0m $@"
 	@mkdir -p ${OUTPUT_DIR}
 	$(CC) $(LFLAGS) -o $@ $(foreach file, $^, $(file)) -lm
+	@echo -e "\033[1;33m[Disasm...   ]\033[0m $^"
 	$(OBJDUMP) -h -S $@ > $(OUTPUT_DIR)/$(PROJ_NAME).lss
 
 $(OUTPUT_DIR)/$(PROJ_NAME).hex: $(OUTPUT_DIR)/$(PROJ_NAME).elf
+	@echo -e "\033[1;33m[Binary      ]\033[0m $^"
 	$(OBJCOPY) -O ihex -R .eeprom $^ $@
 
 size: $(OUTPUT_DIR)/$(PROJ_NAME).elf
 	$(SIZE) -C --mcu=$(MCU) $(OUTPUT_DIR)/$(PROJ_NAME).elf
+
+flash:		$(OUTPUT_DIR)/$(PROJ_NAME).hex
+	$(AVRDUDE) -p $(MCU) -c usbasp -U flash:w:$(OUTPUT_DIR)/$(PROJ_NAME).hex
+
+fuse:			$(OUTPUT_DIR)/$(PROJ_NAME).hex
+	$(AVRDUDE) -p $(MCU) -c usbasp -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m
+
+test:
+	$(AVRDUDE) -p $(MCU) -c usbasp 
 
 clean:
 	@echo -e "\033[1;33m[Cleaning   ]\033[0m"
