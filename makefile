@@ -61,9 +61,9 @@ AVRDUDE		 = avrdude
 # Microcontroller
 MCU        = atmega328p
 F_CPU      = 2000000
-# Fuses
+# Fuses -- www.engbedded.com/fusecalc/
 LFUSE			 = 0x62
-HFUSE			 = 0xd9
+HFUSE			 = 0xD9
 
 ### GCC options ###
 
@@ -92,6 +92,22 @@ CXXFLAGS = $(CFLAGS)
 LFLAGS     = -mmcu=$(MCU)
 LFLAGS    += $(addprefix -I,$(INC_DIR))
 
+######################################################################
+#                      PROGRAMMING TOOLS                             #
+######################################################################
+# To match MCU with BOARD, see link
+# http://www.nongnu.org/avr-libc/user-manual/using_tools.html
+PROGRAMMER = usbasp
+# verbose
+PROGRAM_FLAGS =  -v
+# choose programmer
+PROGRAM_FLAGS += -c $(PROGRAMMER)
+# target cpu
+PROGRAM_FLAGS += -p $(MCU)
+
+######################################################################
+#                             TARGETS                                #
+######################################################################
 .PHONY: clean
 
 all:     $(OUTPUT_DIR)/$(PROJ_NAME).hex
@@ -135,13 +151,13 @@ size: $(OUTPUT_DIR)/$(PROJ_NAME).elf
 	$(SIZE) -C --mcu=$(MCU) $(OUTPUT_DIR)/$(PROJ_NAME).elf
 
 flash:		$(OUTPUT_DIR)/$(PROJ_NAME).hex
-	$(AVRDUDE) -p $(MCU) -c usbasp -U flash:w:$(OUTPUT_DIR)/$(PROJ_NAME).hex
+	$(AVRDUDE) $(PROGRAM_FLAGS) -U flash:w:$(OUTPUT_DIR)/$(PROJ_NAME).hex
 
 fuse:			$(OUTPUT_DIR)/$(PROJ_NAME).hex
-	$(AVRDUDE) -p $(MCU) -c usbasp -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m
+	$(AVRDUDE) $(PROGRAM_FLAGS) -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m
 
 test:
-	$(AVRDUDE) -p $(MCU) -c usbasp 
+	$(AVRDUDE) $(PROGRAM_FLAGS)
 
 clean:
 	@echo -e "\033[1;33m[Cleaning   ]\033[0m"
