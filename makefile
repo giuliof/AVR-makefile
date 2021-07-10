@@ -73,6 +73,7 @@ CXXFLAGS += -std=c++11
 CXXFLAGS += -fno-exceptions -fstack-usage -fdump-tree-optimized -ffunction-sections -fdata-sections -fno-threadsafe-statics
 
 ## Linker flags ##
+LDFLAGS    := $(ARCH_FLAGS)
 # LDFLAGS    += --specs=nano.specs -Wl,--gc-sections
 # LDFLAGS    += -Wl,--no-wchar-size-warning
 ## Linker script
@@ -139,24 +140,12 @@ endif
 # PRG        = stm32flash
 # PRGPORT   ?= /dev/ttyUSB0
 # PRGFLAGS   = $(PRGPORT)
-# PRGFLAGS  += -w
+# PRGFLAGS  += -w # mind the whitespace
 
 ## With avrdude
 PRG        = avrdude
-PRGFLAGS  += -w
-
-######################################################################
-#                      VERSIONING TOOLS                              #
-######################################################################
-# GIT_DESCRIBE :=$(subst -, ,$(shell git describe --long --dirty --tags))
-# BRANCH     := $(shell git branch --show-current)
-# COMMIT     := $(strip $(word 3, $(GIT_DESCRIBE)))
-# VERSION    := $(strip $(word 1, $(subst ., ,$(word 1, $(GIT_DESCRIBE)))))
-# MAJOR      := $(strip $(word 2, $(subst ., ,$(word 1, $(GIT_DESCRIBE)))))
-# MINOR      := $(strip $(word 2, $(GIT_DESCRIBE)))
-# DIRTY      := $(strip $(word 4, $(GIT_DESCRIBE)))
-# VERSION_FILE  = src/version.git.h
-
+PRGPORT   ?= /dev/ttyUSB0
+PRGFLAGS  += -c arduino -P $(PRGPORT) -p $(MCU) -U flash:w:
 
 ######################################################################
 #                             TARGETS                                #
@@ -218,23 +207,11 @@ $(OUTPUT_DIR)/$(PROJ_NAME).hex: $(OUTPUT_DIR)/$(PROJ_NAME).elf
 	@echo -e "\033[1;36m[Binary      ]\033[0m $^"
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
 
-# TODO: programming targets
 .PHONY: flash
 flash: $(OUTPUT_DIR)/$(PROJ_NAME).hex
 	@echo -e "\033[1;36m[Flash      ]\033[0m $^"
 	@#$(PRG) $(PRGFLAGS) $<
-	$(PRG) $(PRGFLAGS) -U flash:w:$<
-
-# FIXME: appropriate version
-.PHONY: version
-version:
-	@echo "#pragma once" > $(VERSION_FILE)
-	@echo "#define BRANCH $(BRANCH)" >> $(VERSION_FILE)
-	@echo "#define COMMIT $(COMMIT)" >> $(VERSION_FILE)
-	@echo "#define VERSION $(VERSION)" >> $(VERSION_FILE)
-	@echo "#define MAJOR $(MAJOR)" >> $(VERSION_FILE)
-	@echo "#define MINOR $(MINOR)" >> $(VERSION_FILE)
-	@echo "#define DIRTY $(DIRTY)" >> $(VERSION_FILE)
+	$(PRG) $(PRGFLAGS)$<
 
 .PHONY: size
 size: $(OUTPUT_DIR)/$(PROJ_NAME).elf
