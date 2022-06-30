@@ -59,6 +59,8 @@ COMMON_CFLAGS     += -Wall -Wextra -Wshadow
 # COMMON_CFLAGS    += -fshort-enums
 ## Patch GCC12 warning -- https://gcc.gnu.org/bugzilla//show_bug.cgi?id=105523
 COMMON_CFLAGS     += --param=min-pagesize=0
+## Put functions and data in their own different sections
+# COMMON_CFLAGS    += -ffunction-sections -fdata-sections
 ## Microcontroller informations
 COMMON_CFLAGS     += $(ARCH_FLAGS)
 ## Header files
@@ -66,17 +68,16 @@ COMMON_CFLAGS     += $(addprefix -I,$(INC_DIR))
 
 ## gcc flags ##
 CFLAGS = $(COMMON_CFLAGS)
-## Puts functions and data into its own section
-CFLAGS    += -ffunction-sections -fdata-sections
 
 ## g++ flags ##
 CXXFLAGS = $(COMMON_CFLAGS)
 CXXFLAGS += -std=c++11
-CXXFLAGS += -fno-exceptions -fstack-usage -fdump-tree-optimized -ffunction-sections -fdata-sections -fno-threadsafe-statics
+CXXFLAGS += -fno-exceptions -fstack-usage -fdump-tree-optimized -fno-threadsafe-statics
 
 ## Linker flags ##
 LDFLAGS    := $(ARCH_FLAGS)
-# LDFLAGS    += --specs=nano.specs -Wl,--gc-sections
+LDFLAGS    += -Wl,--gc-sections
+# LDFLAGS    += --specs=nano.specs
 # LDFLAGS    += -Wl,--no-wchar-size-warning
 ## Linker script
 ifdef LDSCRIPT
