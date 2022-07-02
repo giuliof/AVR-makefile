@@ -57,6 +57,8 @@ COMMON_CFLAGS     += -Os
 COMMON_CFLAGS     += -Wall -Wextra -Wshadow
 ## Use smallest size for enums
 # COMMON_CFLAGS    += -fshort-enums
+## Patch GCC12 warning -- https://gcc.gnu.org/bugzilla//show_bug.cgi?id=105523
+COMMON_CFLAGS     += --param=min-pagesize=0
 ## Microcontroller informations
 COMMON_CFLAGS     += $(ARCH_FLAGS)
 ## Header files
